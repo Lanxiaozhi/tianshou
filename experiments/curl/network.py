@@ -35,7 +35,7 @@ class CURL_DQN(nn.Module):
                 nn.Linear(self.output_dim, 512), nn.ReLU(inplace=True),
                 nn.Linear(512, np.prod(action_shape)))
             self.contrastive_head = nn.Sequential(
-                nn.Linear(self.output_dim, 256), nn.ReLU(),
+                nn.Linear(self.output_dim, 256), nn.LayerNorm(256), nn.ReLU(),
                 nn.Linear(256, 128), nn.LayerNorm(128)
             )
             self.W = nn.Parameter(torch.rand(128, 128))

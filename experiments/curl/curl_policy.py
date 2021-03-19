@@ -49,9 +49,7 @@ class CURL_DQNPolicy(BasePolicy):
         self.model = model
         # contrastive model
         self.momentum_model = deepcopy(self.model)
-        for p in self.momentum_model.parameters():
-            p.requires_grad = False
-        self.momentum_model.eval()
+        # self.momentum_model.eval()
 
         self.optim = optim
         self.eps = 0.0
@@ -66,6 +64,11 @@ class CURL_DQNPolicy(BasePolicy):
             self.model_old = deepcopy(self.model)
             self.model_old.eval()
         self._rew_norm = reward_normalization
+
+        self.initialize_momentum_net()
+        self.momentum_model.train()
+        for p in self.momentum_model.parameters():
+            p.requires_grad = False
 
     def set_eps(self, eps: float) -> None:
         """Set the eps for epsilon-greedy exploration."""
@@ -194,6 +197,7 @@ class CURL_DQNPolicy(BasePolicy):
         loss.backward()
         self.optim.step()
         self._iter += 1
+        self.update_momentum_net()
         return {"loss": loss.item(), "base_loss": base_loss.item(), "moco_loss": moco_loss.item()}
 
     def exploration_noise(self, act: np.ndarray, batch: Batch) -> np.ndarray:
@@ -206,3 +210,14 @@ class CURL_DQNPolicy(BasePolicy):
             rand_act = q.argmax(axis=1)
             act[rand_mask] = rand_act[rand_mask]
         return act
+
+    def initialize_momentum_net(self):
+    for param_q, param_k in zip(self.model.parameters(), self.momentum_model.parameters()):
+        param_k.data.copy_(param_q.data) # update
+        param_k.requires_grad = False  # not update by gradient
+
+    # Code for this function from https://github.com/facebookresearch/moco
+    @torch.no_grad()
+    def update_momentum_net(self, momentum=0.999):
+    for param_q, param_k in zip(self.model.parameters(), self.momentum_model.parameters()):
+        param_k.data.copy_(momentum * param_k.data + (1.- momentum) * param_q.data) # update
