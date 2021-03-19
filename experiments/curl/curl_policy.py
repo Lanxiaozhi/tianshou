@@ -212,12 +212,12 @@ class CURL_DQNPolicy(BasePolicy):
         return act
 
     def initialize_momentum_net(self):
-    for param_q, param_k in zip(self.model.parameters(), self.momentum_model.parameters()):
-        param_k.data.copy_(param_q.data) # update
-        param_k.requires_grad = False  # not update by gradient
+        for param_q, param_k in zip(self.model.parameters(), self.momentum_model.parameters()):
+            param_k.data.copy_(param_q.data) # update
+            param_k.requires_grad = False  # not update by gradient
 
     # Code for this function from https://github.com/facebookresearch/moco
     @torch.no_grad()
     def update_momentum_net(self, momentum=0.999):
-    for param_q, param_k in zip(self.model.parameters(), self.momentum_model.parameters()):
-        param_k.data.copy_(momentum * param_k.data + (1.- momentum) * param_q.data) # update
+        for param_q, param_k in zip(self.model.parameters(), self.momentum_model.parameters()):
+            param_k.data.copy_(momentum * param_k.data + (1.- momentum) * param_q.data) # update
